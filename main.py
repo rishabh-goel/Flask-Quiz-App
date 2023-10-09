@@ -1,22 +1,29 @@
 from flask import Flask, redirect, render_template, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
-from cryptography.fernet import Fernet
 
 app = Flask(__name__)
-app.secret_key= 'qwerty'
+app.secret_key = 'qwerty'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
-
-key = Fernet.generate_key()
-cipher_suite = Fernet(key)
 
 
 class User(db.Model):
     first_name = db.Column(db.String(100))
     last_name = db.Column(db.String(100))
     email = db.Column(db.String(100), primary_key=True)
-    password = db.Column(db.LargeBinary(200))
+    password = db.Column(db.String(100))
+
+
+# TODO: Create method to insert data to table
+class TestQues(db.Model):
+    category = db.Column(db.String(100), primary_key=True)
+    ques = db.Column(db.String(500), primary_key=True)
+    option1 = db.Column(db.String(200), primary_key=True)
+    option2 = db.Column(db.String(200), primary_key=True)
+    option3 = db.Column(db.String(200), primary_key=True)
+    option4 = db.Column(db.String(200), primary_key=True)
+    correctAns = db.Column(db.String(200), primary_key=True)
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -41,18 +48,55 @@ def register():
             # TODO: throw an error that passwords don't match
             return render_template('register.html')
 
-        new_user = User(first_name=fname, last_name=lname, email=email,
-                        password=cipher_suite.encrypt(bytes(pwd, 'utf-8')))
+        new_user = User(first_name=fname, last_name=lname, email=email, password=pwd)
         db.session.add(new_user)
         db.session.commit()
         flash('Thanks for registering! Your account has been created', 'success')
-        return redirect(url_for('login'))
+        return redirect(url_for('dashboard'))
     return render_template('register.html')
 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        pwd = request.form.get('pwd')
+
+        user = User.query.filter_by(email=email).first()
+
+        if user is None:
+            flash('User not found', 'failure')
+        else:
+            if pwd == user.password:
+                return redirect(url_for('dashboard'))
+            else:
+                flash('Incorrect password', 'failure')
     return render_template('login.html')
+
+
+@app.route('/dashboard', methods=['GET', 'POST'])
+def dashboard():
+    return render_template('dashboard.html')
+
+
+@app.route('/results', methods=['GET', 'POST'])
+def results():
+    return render_template('results.html')
+
+
+@app.route('/logout', methods=['GET', 'POST'])
+def logout():
+    return redirect(url_for('index'))
+
+
+# TODO: This is not working as POST
+@app.route('/get_test', methods=['POST'])
+def get_test():
+    category = request.form.get('category')
+    if request.method == 'POST':
+        ques_list = TestQues.query.filter_by(category=category)
+        return render_template('questions.html', questions=ques_list)
+    return render_template('questions.html')
 
 
 if __name__ == '__main__':
@@ -60,6 +104,3 @@ if __name__ == '__main__':
         db.create_all()
 
     app.run(debug=False)
-    # pwd = "Hello"
-    # encrypt = cipher_suite.encrypt(bytes(pwd, 'utf-8'))
-    # decrypt = str(cipher_suite.decrypt(encrypt), encoding='utf-8')

@@ -12,7 +12,7 @@
       <div class="container-fluid">
         <!-- Left-aligned content -->
         <div class="navbar-nav">
-            <h4 class="nav-link active" aria-current="page" href="#">Quiz App</h4>
+            <h4 class="nav-link active" aria-current="page">Quiz App</h4>
         </div>
       </div>
     </nav>
@@ -21,11 +21,11 @@
         <h2>Login</h2>
         <form action="/login" method="post">
             <div class="form-floating mb-3 mx-auto">
-              <input type="email" class="form-control" id="floatingInput" placeholder="name@example.com">
+              <input type="email" class="form-control" id="floatingInput" name="email" placeholder="name@example.com">
               <label for="floatingInput">Email address</label>
             </div>
             <div class="form-floating mb-3 mx-auto">
-              <input type="password" class="form-control" id="floatingPassword" placeholder="Password">
+              <input type="password" class="form-control" id="floatingPassword" name="pwd" placeholder="Password">
               <label for="floatingPassword">Password</label>
             </div>
             <input class="btn btn-primary" type="submit" value="Submit">
