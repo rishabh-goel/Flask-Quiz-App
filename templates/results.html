@@ -8,7 +8,7 @@
     <title>Results</title>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-light bg-primary sticky-top">
       <div class="container-fluid">
         <!-- Left-aligned content -->
         <div class="navbar-nav">
@@ -51,15 +51,11 @@
         crossorigin="anonymous"></script>
 
     <script>
-        // Example data for dynamic table rows
-        var testResults = [
-            { testDate: "2023-09-20", category: "Single Choice Ques", time: "123", score: 95 },
-            { testDate: "2023-09-18", category: "Fill in the blanks", time: "123", score: 88 },
-            { testDate: "2023-09-15", category: "Multiple Choice Ques", time: "123", score: 75 },
-        ];
+<!--        // Example data for dynamic table rows-->
+<!--        var testResults;-->
 
         // Function to populate the dynamic table rows
-        function populateTable() {
+        function populateTable(testResults) {
             var resultTable = document.getElementById("resultTable");
 
             for (var i = 0; i < testResults.length; i++) {
@@ -75,8 +71,26 @@
             }
         }
 
-        // Call the function to populate the table
-        populateTable();
+        function fetchData() {
+            fetch('/get-test-results', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                testResults = data.testResults;
+                // Populate the table with the fetched data
+                populateTable(testResults);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        // Call the fetchData function to fetch data when the page loads
+        fetchData();
     </script>
 </body>
 </html>

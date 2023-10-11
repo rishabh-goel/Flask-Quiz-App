@@ -11,6 +11,11 @@
     margin-left: 50px;
 }
 
+.container-questions {
+    margin-top: 80px;
+    margin-left: 50px;
+}
+
 .form-floating {
     width: 60%;
 }
@@ -30,6 +35,28 @@
 
 .row {
     margin-top: 100px;
+}
+
+.timer {
+    margin-top: 50px;
+    text-align: center;
+}
+
+.col-8 {
+    width: 50%; /* Adjust the width as needed */
+    padding: 20px; /* Add padding for spacing */
+}
+
+.question {
+    border-bottom: 1px solid #ccc; /* Add a border to separate questions */
+    padding-bottom: 10px; /* Add spacing below the question */
+    margin-bottom: 10px; /* Add margin between questions */
+}
+
+.submit-answers {
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
 }
 
 #tagline {

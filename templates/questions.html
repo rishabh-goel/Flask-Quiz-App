@@ -2,9 +2,201 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta charset="UTF-8">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="/static/styles.css">
     <title>Questions</title>
 </head>
 <body>
-    <h1>Questions</h1>
+    <nav class="navbar navbar-expand-lg navbar-light bg-primary sticky-top">
+        <div class="container-fluid">
+            <!-- Left-aligned content -->
+            <div class="navbar-nav">
+                <h4 class="nav-link active" aria-current="page">Quiz App</h4>
+            </div>
+
+            <!-- Right-aligned content -->
+            <div class="navbar-nav ml-auto">
+                <a class="nav-link active" aria-current="page" href="/logout">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="timer">
+        <div id="timer-container">
+            <h3>Timer</h3>
+            <div id="timer">00:00</div>
+        </div>
+    </div>
+    <div class="container-questions">
+        <div class="row">
+            <div class="col-8">
+                {% for question in questions %}
+                    <div class="question">
+                        <br>
+                        <p>{{ question.ques }}</p>
+                        <form id="form-{{ question.id }}">
+                            <label>
+                                <input type="radio" name="answer-{{ question.id }}" value="{{ question.option1 }}">
+                                {{ question.option1 }}
+                            </label>
+                            <br>
+                            <label>
+                                <input type="radio" name="answer-{{ question.id }}" value="{{ question.option2 }}">
+                                {{ question.option2 }}
+                            </label>
+                            <br>
+                            <label>
+                                <input type="radio" name="answer-{{ question.id }}" value="{{ question.option3 }}">
+                                {{ question.option3 }}
+                            </label>
+                            <br>
+                            <label>
+                                <input type="radio" name="answer-{{ question.id }}" value="{{ question.option4 }}">
+                                {{ question.option4 }}
+                            </label>
+                            <br>
+                        </form>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        <button id="submit-button" class="btn btn-primary">Submit</button>
+    </div>
+
+    <div class="modal fade" id="scoreModal" tabindex="-1" aria-labelledby="scoreModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="scoreModalLabel">Final Score</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close" id="closeScoreModal">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p id="scoreMessage"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous">
+    </script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous">
+    </script>
+    <script>
+        // JavaScript for the timer
+        const timerElement = document.getElementById('timer');
+
+        let time = 0;
+        let timerInterval;
+        let score;  // Define score in a broader scope
+
+        function updateTime() {
+            time++;
+            const minutes = Math.floor(time / 60);
+            const seconds = time % 60;
+            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(updateTime, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
+        // Update the timer every second
+        startTimer();
+
+        const submitButton = document.getElementById('submit-button');
+        submitButton.addEventListener('click', function() {
+            // Stop the timer when the Submit button is clicked
+            stopTimer();
+            const answers = [];
+
+            // Loop through the questions to collect selected answers
+            {% for question in questions %}
+                var form_element = document.getElementById('form-{{ question.id }}');
+                var selectedAnswer = form_element.querySelector('input[name="answer-{{ question.id }}"]:checked');
+
+                if (selectedAnswer) {
+                    answers.push({
+                        questionId: '{{ question.id }}',
+                        selectedAnswer: selectedAnswer.value,
+                    });
+                }
+            {% endfor %}
+
+            // Send the collected answers to the server for checking against correct answers
+            // You can use an AJAX request here to send the data to your server
+
+            fetch('/check-answers', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(answers),
+            })
+            .then(response => response.json())
+            .then(data => {
+                const scoreMessage = document.getElementById('scoreMessage');
+                scoreMessage.textContent = 'Your score is: ' + data.score;
+                test_category = data.category;
+
+                // Set the score variable in this scope
+                score = data.score;
+
+                // Rest of your code to send data to the server here
+
+                // Show the modal
+                $('#scoreModal').modal('show');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+
+        // Event listener for the close button in the scoreModal
+        const closeScoreModalButton = document.getElementById('closeScoreModal');
+        closeScoreModalButton.addEventListener('click', function() {
+            // Insert data into the SQLAlchemy database
+            const currentDate = new Date();
+            const formattedDate = currentDate.toISOString();
+            const dataToSend = {
+                date: formattedDate,
+                category: test_category,
+                time: time,
+                score: score,
+            };
+
+            fetch('/store-results', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(dataToSend),
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle the response from the server (if needed)
+                console.log('Results stored:', data);
+
+                // Redirect to dashboard.html
+                window.location.href = '/dashboard';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+
+
 </body>
 </html>

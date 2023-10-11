@@ -1,5 +1,8 @@
-from flask import Flask, redirect, render_template, url_for, request, flash
-from flask_sqlalchemy import SQLAlchemy
+import uuid
+
+from flask import Flask, redirect, render_template, url_for, request, flash, jsonify
+from flask_sqlalchemy import SQLAlchemy, session
+from sqlalchemy import func
 
 app = Flask(__name__)
 app.secret_key = 'qwerty'
@@ -15,15 +18,39 @@ class User(db.Model):
     password = db.Column(db.String(100))
 
 
-# TODO: Create method to insert data to table
 class TestQues(db.Model):
-    category = db.Column(db.String(100), primary_key=True)
-    ques = db.Column(db.String(500), primary_key=True)
-    option1 = db.Column(db.String(200), primary_key=True)
-    option2 = db.Column(db.String(200), primary_key=True)
-    option3 = db.Column(db.String(200), primary_key=True)
-    option4 = db.Column(db.String(200), primary_key=True)
-    correctAns = db.Column(db.String(200), primary_key=True)
+    id = db.Column(db.String(100), primary_key=True)
+    category = db.Column(db.String(100))
+    ques = db.Column(db.String(500))
+    option1 = db.Column(db.String(200))
+    option2 = db.Column(db.String(200))
+    option3 = db.Column(db.String(200))
+    option4 = db.Column(db.String(200))
+    correctAns = db.Column(db.String(200))
+
+
+class TestResults(db.Model):
+    id = db.Column(db.String(100), primary_key=True, default=str(uuid.uuid4()), unique=True)
+    testDate = db.Column(db.DateTime)
+    category = db.Column(db.String(100))
+    time = db.Column(db.Time)
+    score = db.Column(db.String(200))
+
+
+def add_data_to_question_database(id, category, ques, op1, op2, op3, op4, correct):
+    try:
+        # Create an instance of the model and populate its attributes
+        new_data = TestQues(id=id, category=category, ques=ques, option1=op1, option2=op2, option3=op3, option4=op4,
+                            correctAns=correct)
+        # Add the instance to the database session
+        db.session.add(new_data)
+        # Commit the changes to the database
+        db.session.commit()
+        return "Data added successfully."
+    except Exception as e:
+        # Handle any errors, such as a database integrity error or validation error
+        db.session.rollback()
+        return "An error occurred while adding data: " + str(e)
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -89,18 +116,83 @@ def logout():
     return redirect(url_for('index'))
 
 
-# TODO: This is not working as POST
-@app.route('/get_test', methods=['POST'])
+@app.route('/get-test', methods=['POST'])
 def get_test():
     category = request.form.get('category')
-    if request.method == 'POST':
-        ques_list = TestQues.query.filter_by(category=category)
-        return render_template('questions.html', questions=ques_list)
-    return render_template('questions.html')
+    ques_list = TestQues.query.filter_by(category=category).all()
+    return render_template('questions.html', questions=ques_list)
+
+
+@app.route('/check-answers', methods=['POST'])
+def check_answers():
+    answers = request.get_json()
+    count = 0
+
+    category = answers[0]['questionId'].split('-')[0]
+    total = db.session.query(func.count(TestQues.id)).filter(TestQues.category == category).scalar()
+
+    for answer in answers:
+        question_id = answer['questionId']
+        user_answer = answer['selectedAnswer']
+        entry = TestQues.query.filter_by(id=question_id).first()
+
+        if user_answer == entry.correctAns:
+            count += 1
+
+    result = {'score': f'{count}/{total}', 'category': category}
+    return jsonify(result)
+
+
+@app.route('/store-results', methods=['POST'])
+def store_results():
+    result = request.json
+    new_result = TestResults(testDate=result.date, category=result.category, time=result.time, score=result.score)
+    db.session.add(new_result)
+    db.session.commit()
+    return render_template('dashboard.html')
+
+
+@app.route('/get-test-results', methods=['GET'])
+def get_test_results():
+    # Fetch test results from the database (you might want to filter, sort, etc.)
+    test_results = TestResults.query.all()
+
+    # Create a list of dictionaries for the results
+    results_list = []
+    for result in test_results:
+        results_list.append({
+            'testDate': result.testDate.strftime('%Y-%m-%d %H:%M:%S'),  # Format the date
+            'category': result.category,  # Replace with your actual column name
+            'time': result.time.strftime('%H:%M:%S'),  # Format the time
+            'score': result.score,  # Replace with your actual column name
+        })
+
+    return jsonify(testResults=results_list)
 
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
 
-    app.run(debug=False)
+        if db.session.query(TestQues).first() is None:
+            add_data_to_question_database('mcq-1', 'mcq', 'ques1', 'op1', 'op2', 'op3', 'op4', 'op1')
+            add_data_to_question_database('mcq-2', 'mcq', 'ques2', 'op1', 'op2', 'op3', 'op4', 'op1')
+            add_data_to_question_database('mcq-3', 'mcq', 'ques3', 'op1', 'op2', 'op3', 'op4', 'op1')
+            add_data_to_question_database('mcq-4', 'mcq', 'ques4', 'op1', 'op2', 'op3', 'op4', 'op1')
+            add_data_to_question_database('mcq-5', 'mcq', 'ques5', 'op1', 'op2', 'op3', 'op4', 'op1')
+
+            add_data_to_question_database('synonym-1', 'synonym', 'ques1', 'op1', 'op2', 'op3', 'op4', 'op1')
+            add_data_to_question_database('synonym-2', 'synonym', 'ques2', 'op1', 'op2', 'op3', 'op4', 'op1')
+            add_data_to_question_database('synonym-3', 'synonym', 'ques3', 'op1', 'op2', 'op3', 'op4', 'op1')
+            add_data_to_question_database('synonym-4', 'synonym', 'ques4', 'op1', 'op2', 'op3', 'op4', 'op1')
+            add_data_to_question_database('synonym-5', 'synonym', 'ques5', 'op1', 'op2', 'op3', 'op4', 'op1')
+
+            add_data_to_question_database('test_completion-1', 'test_completion', 'ques1', 'op1', 'op2', 'op3', 'op4', 'op1')
+            add_data_to_question_database('test_completion-2', 'test_completion', 'ques2', 'op1', 'op2', 'op3', 'op4', 'op1')
+            add_data_to_question_database('test_completion-3', 'test_completion', 'ques3', 'op1', 'op2', 'op3', 'op4', 'op1')
+            add_data_to_question_database('test_completion-4', 'test_completion', 'ques4', 'op1', 'op2', 'op3', 'op4', 'op1')
+            add_data_to_question_database('test_completion-5', 'test_completion', 'ques5', 'op1', 'op2', 'op3', 'op4', 'op1')
+
+    app.run(debug=False, port=3000)
+
+
