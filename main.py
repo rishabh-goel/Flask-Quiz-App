@@ -1,8 +1,9 @@
 import uuid
 
 from flask import Flask, redirect, render_template, url_for, request, flash, jsonify
-from flask_sqlalchemy import SQLAlchemy, session
-from sqlalchemy import func
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func, DateTime, Time
+from datetime import datetime, timedelta, time
 
 app = Flask(__name__)
 app.secret_key = 'qwerty'
@@ -31,9 +32,9 @@ class TestQues(db.Model):
 
 class TestResults(db.Model):
     id = db.Column(db.String(100), primary_key=True, default=str(uuid.uuid4()), unique=True)
-    testDate = db.Column(db.DateTime)
+    testDate = db.Column(DateTime)
     category = db.Column(db.String(100))
-    time = db.Column(db.Time)
+    time = db.Column(Time)
     score = db.Column(db.String(200))
 
 
@@ -146,10 +147,14 @@ def check_answers():
 @app.route('/store-results', methods=['POST'])
 def store_results():
     result = request.json
-    new_result = TestResults(testDate=result.date, category=result.category, time=result.time, score=result.score)
+    seconds = result.get('time')
+    time_object = timedelta(seconds=seconds)
+    formatted_time = time(time_object.seconds // 3600, (time_object.seconds // 60) % 60, time_object.seconds % 60)
+    new_result = TestResults(testDate=datetime.now(), category=result.get('category'), time=formatted_time,
+                             score=result.get('score'))
     db.session.add(new_result)
     db.session.commit()
-    return render_template('dashboard.html')
+    return jsonify({"message": "Results stored successfully"})
 
 
 @app.route('/get-test-results', methods=['GET'])
@@ -194,5 +199,4 @@ if __name__ == '__main__':
             add_data_to_question_database('test_completion-5', 'test_completion', 'ques5', 'op1', 'op2', 'op3', 'op4', 'op1')
 
     app.run(debug=False, port=3000)
-
 

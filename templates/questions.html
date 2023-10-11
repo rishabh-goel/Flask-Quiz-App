@@ -166,11 +166,10 @@
         // Event listener for the close button in the scoreModal
         const closeScoreModalButton = document.getElementById('closeScoreModal');
         closeScoreModalButton.addEventListener('click', function() {
+
+            event.preventDefault();
             // Insert data into the SQLAlchemy database
-            const currentDate = new Date();
-            const formattedDate = currentDate.toISOString();
             const dataToSend = {
-                date: formattedDate,
                 category: test_category,
                 time: time,
                 score: score,
@@ -183,7 +182,10 @@
                 },
                 body: JSON.stringify(dataToSend),
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('Response from server:', response);
+                return response.json();
+            })
             .then(data => {
                 // Handle the response from the server (if needed)
                 console.log('Results stored:', data);
