@@ -27,41 +27,47 @@
     </nav>
 
 
-	 	<form action="/get-test" method="POST">
-            <div class="row mysec">
-                <div class="col-3 "></div>
-                <div class="col-2 box">
-                    <div class="card shadow">
-                        <div class="card-body">
-                            <center>
-                                <input type="hidden" name="category" value="mcq">
-                                <button type="submit" class="btn btn-primary mybtn">MCQ</button>
-                            </center>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-2 box">
-                    <div class="card shadow">
-                        <div class="card-body">
-                            <center>
-                                <input type="hidden" name="category" value="text_completion">
-                                <button type="submit" class="btn btn-primary mybtn">Text Completion</button>
-                            </center>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-2 box">
-                    <div class="card shadow">
-                        <div class="card-body">
-                            <center>
-                                <input type="hidden" name="category" value="synonym">
-                                <button type="submit" class="btn btn-primary mybtn">Synonym</button>
-                            </center>
-                        </div>
+    <form action="/get-test" method="POST">
+        <div class="row mysec">
+            <div class="col-3"></div>
+            <div class="col-2 box">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <center>
+                            <button type="button" class="btn btn-primary mybtn" onclick="setCategory('mcq')">MCQ</button>
+                        </center>
                     </div>
                 </div>
             </div>
-        </form>
+            <div class="col-2 box">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <center>
+                            <button type="button" class="btn btn-primary mybtn" onclick="setCategory('test_completion')">Text Completion</button>
+                        </center>
+                    </div>
+                </div>
+            </div>
+            <div class="col-2 box">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <center>
+                            <button type="button" class="btn btn-primary mybtn" onclick="setCategory('synonym')">Synonym</button>
+                        </center>
+                    </div>
+                </div>
+            </div>
+            <input type="hidden" id="categoryInput" name="category" value="">
+        </div>
+    </form>
+
+    <script>
+        function setCategory(category) {
+            document.getElementById('categoryInput').value = category;
+            document.querySelector('form').submit();
+        }
+    </script>
+
 
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"

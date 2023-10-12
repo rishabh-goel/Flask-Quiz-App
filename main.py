@@ -31,7 +31,7 @@ class TestQues(db.Model):
 
 
 class TestResults(db.Model):
-    id = db.Column(db.String(100), primary_key=True, default=str(uuid.uuid4()), unique=True)
+    id = db.Column(db.String(100), primary_key=True)
     testDate = db.Column(DateTime)
     category = db.Column(db.String(100))
     time = db.Column(Time)
@@ -69,12 +69,12 @@ def register():
         confirm_pwd = request.form.get('confirm_pwd')
 
         if fname == "" or lname == "" or email == "" or pwd == "" or confirm_pwd == "":
-            # TODO: throw an error that fields are empty
-            return render_template('register.html')
+            error_message = "All fields must be filled out."
+            return render_template('register.html', error_message=error_message)
 
         if pwd != confirm_pwd:
-            # TODO: throw an error that passwords don't match
-            return render_template('register.html')
+            error_message = "Passwords do not match."
+            return render_template('register.html', error_message=error_message)
 
         new_user = User(first_name=fname, last_name=lname, email=email, password=pwd)
         db.session.add(new_user)
@@ -93,12 +93,14 @@ def login():
         user = User.query.filter_by(email=email).first()
 
         if user is None:
-            flash('User not found', 'failure')
+            error_message = "User not found"
+            return render_template('login.html', error_message=error_message)
         else:
             if pwd == user.password:
                 return redirect(url_for('dashboard'))
             else:
-                flash('Incorrect password', 'failure')
+                error_message = "Passwords do not match."
+                return render_template('login.html', error_message=error_message)
     return render_template('login.html')
 
 
@@ -120,6 +122,7 @@ def logout():
 @app.route('/get-test', methods=['POST'])
 def get_test():
     category = request.form.get('category')
+    print(category)
     ques_list = TestQues.query.filter_by(category=category).all()
     return render_template('questions.html', questions=ques_list)
 
@@ -150,7 +153,8 @@ def store_results():
     seconds = result.get('time')
     time_object = timedelta(seconds=seconds)
     formatted_time = time(time_object.seconds // 3600, (time_object.seconds // 60) % 60, time_object.seconds % 60)
-    new_result = TestResults(testDate=datetime.now(), category=result.get('category'), time=formatted_time,
+    total = db.session.query(TestResults).count()
+    new_result = TestResults(id=total+1, testDate=datetime.now(), category=result.get('category'), time=formatted_time,
                              score=result.get('score'))
     db.session.add(new_result)
     db.session.commit()
@@ -172,7 +176,8 @@ def get_test_results():
             'score': result.score,  # Replace with your actual column name
         })
 
-    return jsonify(testResults=results_list)
+    reversed_list = results_list[::-1]
+    return jsonify(testResults=reversed_list)
 
 
 if __name__ == '__main__':

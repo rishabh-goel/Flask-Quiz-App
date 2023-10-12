@@ -17,16 +17,11 @@
 
         <!-- Right-aligned content -->
         <div class="navbar-nav ml-auto">
+            <a class="nav-link active" aria-current="page" href="/dashboard">Dashboard</a>
             <a class="nav-link active" aria-current="page" href="/">Logout</a>
         </div>
       </div>
     </nav>
-
-    <div class="container mt-4">
-        <button class="btn btn-secondary" onclick="goBack()">
-            <i class="bi bi-arrow-left"></i> Back
-        </button>
-    </div>
 
     <div class="container mt-3">
         <h2>Test Results</h2>
@@ -51,8 +46,6 @@
         crossorigin="anonymous"></script>
 
     <script>
-<!--        // Example data for dynamic table rows-->
-<!--        var testResults;-->
 
         // Function to populate the dynamic table rows
         function populateTable(testResults) {
